@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournaments - Slotit</title>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap' rel='stylesheet'>
+    <link rel='stylesheet' href='css/styles.css'>
+    <style>
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .tab-pill { padding: 8px 16px; border-radius: var(--radius-full); background: var(--surface); border: 1px solid var(--border); color: var(--text-secondary); white-space: nowrap; cursor: pointer; transition: all 0.2s; font-weight: 600; font-size: 0.85rem; }
+        .tab-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .tab-content { display: none; margin-bottom: 80px; }
+        .tab-content.active { display: block; }
+
+        .tourney-card { background: var(--surface); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); margin-bottom: 15px; }
+        .tourney-header { padding: 15px; color: white; display: flex; justify-content: space-between; align-items: flex-start; }
+        .tourney-body { padding: 15px; }
+        .bg-football { background: linear-gradient(135deg, #10B981, #059669); }
+        .bg-cricket { background: linear-gradient(135deg, #F59E0B, #D97706); }
+        .bg-badminton { background: linear-gradient(135deg, #3B82F6, #2563EB); }
+
+        .live-card { background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border); padding: 15px; margin-bottom: 15px; text-align: center; position: relative; }
+        .live-badge { display: inline-flex; align-items: center; gap: 5px; color: var(--error); font-weight: 700; font-size: 0.8rem; margin-bottom: 10px; }
+        .pulse-dot { width: 8px; height: 8px; background-color: var(--error); border-radius: 50%; animation: pulse 1.5s infinite; }
+
+        .bracket-container { overflow-x: auto; padding: 10px 0; }
+        .bracket { display: flex; gap: 24px; min-width: 520px; }
+        .bracket-column { display: flex; flex-direction: column; justify-content: space-around; gap: 20px; flex: 1; }
+        .bracket-match { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; font-size: 0.85rem; position: relative; }
+        .bracket-team { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border); }
+        .bracket-team:last-child { border-bottom: none; }
+        .bracket-team.winner { font-weight: 700; color: var(--success); }
+
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--surface); padding: 20px; border-radius: var(--radius-lg); width: 90%; max-width: 380px; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="home.html" class="back-btn" style="text-decoration:none;">←</a>
+        <div class="top-bar-title">🏆 Tournaments</div>
+    </div>
+
+    <div class="page-content">
+        <div class="tabs">
+            <div class="tab-pill active" data-tab="upcoming">Upcoming</div>
+            <div class="tab-pill" data-tab="live">Live Match</div>
+            <div class="tab-pill" data-tab="myteams">Registered Teams</div>
+            <div class="tab-pill" data-tab="bracket">Bracket View</div>
+        </div>
+
+        <div id="upcoming" class="tab-content active"></div>
+
+        <div id="live" class="tab-content">
+            <div class="live-card">
+                <div class="live-badge"><div class="pulse-dot"></div> LIVE MATCH</div>
+                <div class="fw-700" style="font-size:1.15rem; margin-bottom:8px;">TKM Strikers <span style="color:var(--primary);">2 - 1</span> Kollam Kings</div>
+                <div class="text-sm text-secondary mb-16">Kollam Super 7s Cup • Semi-Finals</div>
+                <a href="tournament-live.html" class="btn btn-primary btn-sm btn-block" style="text-decoration:none; text-align:center;">Watch Live Commentary →</a>
+            </div>
+        </div>
+
+        <div id="myteams" class="tab-content"></div>
+
+        <div id="bracket" class="tab-content">
+            <div class="bracket-container">
+                <div class="bracket">
+                    <div class="bracket-column">
+                        <div class="bracket-match">
+                            <div class="bracket-team winner"><span>TKM Strikers</span> <span>2</span></div>
+                            <div class="bracket-team"><span>Kollam Kings</span> <span>1</span></div>
+                        </div>
+                        <div class="bracket-match">
+                            <div class="bracket-team"><span>Asramam Avengers</span> <span>0</span></div>
+                            <div class="bracket-team winner"><span>Tangasseri Titans</span> <span>3</span></div>
+                        </div>
+                    </div>
+                    <div class="bracket-column" style="justify-content: center;">
+                        <div class="bracket-match">
+                            <div class="bracket-team winner"><span>TKM Strikers</span> <span>TBD</span></div>
+                            <div class="bracket-team"><span>Tangasseri Titans</span> <span>TBD</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Team Modal -->
+    <div class="modal" id="regModal">
+        <div class="modal-content">
+            <h3 class="fw-700 mb-8" id="regModalTitle">Register Your Team</h3>
+            <p class="text-sm text-secondary mb-16">Enter your team name to register into this tournament.</p>
+            <input type="hidden" id="regTournamentId" value="1">
+            <div class="input-group">
+                <label for="teamNameInput">Team Name</label>
+                <input type="text" id="teamNameInput" class="input-field" placeholder="e.g. TKM United FC">
+            </div>
+            <div class="flex gap-8">
+                <button class="btn btn-outline" style="flex:1;" onclick="closeRegModal()">Cancel</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="submitTeamRegistration()">Register</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="home.html" class="nav-item">
+            <div class="nav-icon">🏠</div>
+            <span>Home</span>
+        </a>
+        <a href="venue-detail.html" class="nav-item">
+            <div class="nav-icon">🔍</div>
+            <span>Explore</span>
+        </a>
+        <a href="my-bookings.html" class="nav-item">
+            <div class="nav-icon">📋</div>
+            <span>Bookings</span>
+        </a>
+        <a href="squad-finder.html" class="nav-item">
+            <div class="nav-icon">👥</div>
+            <span>Squad</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <div class="nav-icon">👤</div>
+            <span>Profile</span>
+        </a>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        function openRegModal(tId, tName) {
+            document.getElementById('regTournamentId').value = tId;
+            document.getElementById('regModalTitle').textContent = `Register — ${tName}`;
+            document.getElementById('teamNameInput').value = '';
+            document.getElementById('regModal').classList.add('active');
+        }
+        function closeRegModal() {
+            document.getElementById('regModal').classList.remove('active');
+        }
+
+        let loadAllData = async () => {};
+
+        async function submitTeamRegistration() {
+            const tId = parseInt(document.getElementById('regTournamentId').value, 10) || 1;
+            const teamName = document.getElementById('teamNameInput').value.trim();
+            if (!teamName) {
+                showToast('Please enter a team name', 'error');
+                return;
+            }
+            const user = getCurrentUser() || { id: 1, userId: 1 };
+            try {
+                await apiCall('/tournaments/register', 'POST', {
+                    tournament_id: tId,
+                    team_name: teamName,
+                    captain_id: user.userId || user.id || 1
+                });
+                closeRegModal();
+                showToast(`Team "${teamName}" registered!`, 'success');
+                await loadAllData();
+            } catch (err) {
+                if (err.isNetwork) {
+                    closeRegModal();
+                    showToast(`Team "${teamName}" registered (Offline demo)!`, 'info');
+                    return;
+                }
+                showToast(err.message || 'Registration failed', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.querySelectorAll('.tab-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-pill').forEach(p => p.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    pill.classList.add('active');
+                    document.getElementById(pill.dataset.tab).classList.add('active');
+                });
+            });
+
+            const FALLBACK_TOURNAMENTS = [
+                { tournamentId: 1, name: 'Kollam Super 7s Cup', venueName: 'GreenPark Football Arena', sport: 'Football', startDate: '2026-10-16', format: 'knockout', maxTeams: 8, teamCount: 4 },
+                { tournamentId: 2, name: 'Chinnakada Smash Open', venueName: 'SmashPoint Badminton Hub', sport: 'Badminton', startDate: '2026-10-21', format: 'knockout', maxTeams: 16, teamCount: 6 },
+                { tournamentId: 3, name: 'TKMCE Box Cricket League', venueName: 'CricketZone Nets', sport: 'Cricket', startDate: '2026-10-25', format: 'league', maxTeams: 8, teamCount: 5 }
+            ];
+            const FALLBACK_TEAMS = [
+                { teamId: 1, name: 'TKM Strikers', tournamentName: 'Kollam Super 7s Cup', sport: 'Football', startDate: '2026-10-16', captainName: 'Ebin Biju Abraham' },
+                { teamId: 2, name: 'Kollam Kings', tournamentName: 'Kollam Super 7s Cup', sport: 'Football', startDate: '2026-10-16', captainName: 'Tharun Bhaskaran' }
+            ];
+
+            loadAllData = async () => {
+                let tournaments = FALLBACK_TOURNAMENTS;
+                let teams = FALLBACK_TEAMS;
+                try {
+                    const [tResp, tmResp] = await Promise.all([
+                        apiCall('/tournaments'),
+                        apiCall('/tournaments/teams')
+                    ]);
+                    const tList = asList(tResp);
+                    const tmList = asList(tmResp);
+                    if (tList.length) tournaments = tList;
+                    if (tmList.length) teams = tmList;
+                } catch (e) {
+                    notifyOffline();
+                }
+
+                const upcomingEl = document.getElementById('upcoming');
+                upcomingEl.innerHTML = '';
+                tournaments.forEach(t => {
+                    const sport = (t.sport || 'Football').toLowerCase();
+                    const bgClass = sport.includes('cricket') ? 'bg-cricket' : (sport.includes('badminton') ? 'bg-badminton' : 'bg-football');
+                    const emoji = sport.includes('cricket') ? '🏏' : (sport.includes('badminton') ? '🏸' : '⚽');
+                    const count = t.teamCount ?? 4;
+                    const max = t.maxTeams ?? 8;
+                    const isFull = count >= max;
+                    const card = document.createElement('div');
+                    card.className = 'tourney-card';
+                    card.innerHTML = `
+                        <div class="tourney-header ${bgClass}">
+                            <div>
+                                <div class="text-xs mb-8" style="opacity:0.9;">${emoji} ${t.sport || 'Football'} • ${(t.format || 'knockout').toUpperCase()}</div>
+                                <h3 class="fw-700" style="margin:0;">${t.name}</h3>
+                            </div>
+                            <div class="badge text-xs" style="background:rgba(255,255,255,0.22);color:white;">📅 ${t.startDate || 'Upcoming'}</div>
+                        </div>
+                        <div class="tourney-body">
+                            <div class="flex justify-between items-center mb-16">
+                                <div class="text-sm text-secondary">📍 ${t.venueName || 'Kollam Arena'}</div>
+                                <div class="fw-600">🏆 ₹15,000 Pool</div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <div class="text-sm">Teams: <span class="fw-700" style="color:var(--primary);">${count}/${max}</span></div>
+                                <button class="btn btn-primary btn-sm reg-btn" ${isFull ? 'disabled' : ''}>${isFull ? 'Full' : 'Register Team →'}</button>
+                            </div>
+                        </div>
+                    `;
+                    if (!isFull) {
+                        card.querySelector('.reg-btn').addEventListener('click', () => openRegModal(t.tournamentId || t.id, t.name));
+                    }
+                    upcomingEl.appendChild(card);
+                });
+
+                const myTeamsEl = document.getElementById('myteams');
+                myTeamsEl.innerHTML = '';
+                teams.forEach(tm => {
+                    const div = document.createElement('div');
+                    div.className = 'card mb-16';
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center mb-8">
+                            <h3 class="fw-700" style="margin:0;">🛡️ ${tm.name}</h3>
+                            <span class="badge badge-success">Registered</span>
+                        </div>
+                        <div class="text-sm text-secondary mb-8">${tm.tournamentName || 'Tournament'} • ${tm.sport || 'Sports'}</div>
+                        <div class="text-xs text-muted">Captain: ${tm.captainName || 'Player'} • Starts ${tm.startDate || 'Soon'}</div>
+                    `;
+                    myTeamsEl.appendChild(div);
+                });
+            };
+
+            await loadAllData();
+        });
+    </script>
+</body>
+</html>

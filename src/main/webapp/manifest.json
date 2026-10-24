@@ -1,0 +1,45 @@
+{
+  "id": "/Slotit/splash.html",
+  "name": "Slotit - Sports Venue Booking",
+  "short_name": "Slotit",
+  "description": "Book sports turfs, join squads, and play in tournaments.",
+  "start_url": "splash.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
+  "background_color": "#2563EB",
+  "theme_color": "#2563EB",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

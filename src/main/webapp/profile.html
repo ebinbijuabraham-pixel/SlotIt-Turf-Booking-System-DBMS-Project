@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Slotit</title>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap' rel='stylesheet'>
+    <link rel='stylesheet' href='css/styles.css'>
+    <style>
+        .profile-header { background: var(--surface); padding: 30px 20px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .avatar-large { width: 80px; height: 80px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; margin-bottom: 15px; }
+
+        .streak-card { background: linear-gradient(135deg, var(--accent), #f59e0b); color: white; padding: 20px; border-radius: var(--radius-md); margin-bottom: 20px; }
+        .streak-dots { display: flex; gap: 8px; margin-top: 15px; }
+        .streak-dot { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 0.72rem; }
+        .streak-dot.active { background: white; color: var(--accent); font-weight: 700; }
+
+        .badges-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        .badge-card { background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.9rem; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-box { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: var(--radius-sm); text-align: center; }
+        .stat-num { font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 5px; }
+
+        .settings-list { background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border); overflow: hidden; margin-bottom: 20px; }
+        .settings-item { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-weight: 500; cursor: pointer; text-decoration: none; color: inherit; }
+        .settings-item:last-child { border-bottom: none; }
+
+        .wallet-card { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius-md); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="top-bar-title">My Profile</div>
+    </div>
+
+    <div class="profile-header">
+        <div class="avatar-large" id="profileAvatar">EB</div>
+        <h2 class="fw-700" id="profileName" style="font-size: 1.25rem; margin: 0 0 4px;">Ebin Biju Abraham</h2>
+        <div class="text-sm text-muted mb-8" id="profileEmail">player1@example.com</div>
+        <span class="badge badge-primary" id="profileRole" style="text-transform:capitalize;">Player</span>
+    </div>
+
+    <div class="page-content" style="padding-bottom: 90px; padding-top: 20px;">
+        <div class="streak-card">
+            <h3 class="fw-700" id="streakTitle" style="margin:0 0 4px;">🔥 5-Booking Streak!</h3>
+            <div class="text-sm" style="opacity: 0.9;">Auto-incremented by MySQL Trigger <code>trg_update_streak</code></div>
+            <div class="streak-dots">
+                <div class="streak-dot active">✓</div>
+                <div class="streak-dot active">✓</div>
+                <div class="streak-dot active">✓</div>
+                <div class="streak-dot active">✓</div>
+                <div class="streak-dot active">✓</div>
+                <div class="streak-dot">6</div>
+            </div>
+        </div>
+
+        <h3 class="fw-600 mb-8 text-sm">💰 Slotit Wallet</h3>
+        <div class="wallet-card">
+            <div>
+                <div class="text-xs text-secondary mb-8">Available Balance</div>
+                <div class="fw-700" id="walletDisplay" style="font-size: 1.5rem;">₹2,500</div>
+            </div>
+            <button class="btn btn-outline btn-sm" id="addMoneyBtn">+ Add ₹500</button>
+        </div>
+
+        <h3 class="fw-600 mb-8 text-sm">🏅 Earned Badges</h3>
+        <div class="badges-grid">
+            <div class="badge-card" id="mainBadgeCard">🥇 Gold Player</div>
+            <div class="badge-card">🌅 Early Bird</div>
+            <div class="badge-card">🔥 Streak Master</div>
+            <div class="badge-card">👥 Squad Captain</div>
+        </div>
+
+        <h3 class="fw-600 mb-8 text-sm">📊 Player Stats (MongoDB NoSQL)</h3>
+        <div class="card mb-16 text-center">
+            <canvas id="radarChart" style="max-height: 250px;"></canvas>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-num" id="statBookings">12</div>
+                <div class="text-xs text-secondary">Total Bookings</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num">3</div>
+                <div class="text-xs text-secondary">MOTM Awards</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num">8</div>
+                <div class="text-xs text-secondary">Goals / Wins</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num">67%</div>
+                <div class="text-xs text-secondary">Win Rate</div>
+            </div>
+        </div>
+
+        <h3 class="fw-600 mb-8 text-sm">⚙️ Quick Links</h3>
+        <div class="settings-list">
+            <a href="tournaments.html" class="settings-item"><span>🏆 Tournaments & Brackets</span> <span>→</span></a>
+            <a href="owner-dashboard.html" class="settings-item"><span>📊 Venue Owner Dashboard</span> <span>→</span></a>
+            <a href="web-dashboard.html" class="settings-item"><span>💻 Desktop Admin Portal</span> <span>→</span></a>
+            <a href="location.html" class="settings-item"><span>📍 Change Location / City</span> <span>→</span></a>
+        </div>
+
+        <button class="btn btn-danger btn-block" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="home.html" class="nav-item">
+            <div class="nav-icon">🏠</div>
+            <span>Home</span>
+        </a>
+        <a href="venue-detail.html" class="nav-item">
+            <div class="nav-icon">🔍</div>
+            <span>Explore</span>
+        </a>
+        <a href="my-bookings.html" class="nav-item">
+            <div class="nav-icon">📋</div>
+            <span>Bookings</span>
+        </a>
+        <a href="squad-finder.html" class="nav-item">
+            <div class="nav-icon">👥</div>
+            <span>Squad</span>
+        </a>
+        <a href="profile.html" class="nav-item active">
+            <div class="nav-icon">👤</div>
+            <span>Profile</span>
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = getCurrentUser();
+            if (user) {
+                if (user.name) {
+                    document.getElementById('profileName').textContent = user.name;
+                    const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    document.getElementById('profileAvatar').textContent = initials;
+                }
+                if (user.email) document.getElementById('profileEmail').textContent = user.email;
+                if (user.role) document.getElementById('profileRole').textContent = user.role;
+                if (user.walletBalance != null) {
+                    document.getElementById('walletDisplay').textContent = `₹${Number(user.walletBalance).toFixed(0)}`;
+                }
+                if (user.streakCount != null) {
+                    document.getElementById('streakTitle').textContent = `🔥 ${user.streakCount}-Booking Streak!`;
+                }
+                if (user.totalBookings != null) {
+                    document.getElementById('statBookings').textContent = user.totalBookings;
+                }
+                if (user.badge && user.badge !== 'none') {
+                    const b = user.badge.charAt(0).toUpperCase() + user.badge.slice(1);
+                    document.getElementById('mainBadgeCard').textContent = `🥇 ${b} Player`;
+                }
+            }
+
+            document.getElementById('addMoneyBtn').addEventListener('click', () => {
+                const u = getCurrentUser() || { id: 1, userId: 1, name: 'Ebin Biju Abraham', walletBalance: 2500 };
+                u.walletBalance = Number(u.walletBalance || 0) + 500;
+                setCurrentUser(u);
+                document.getElementById('walletDisplay').textContent = `₹${u.walletBalance.toFixed(0)}`;
+                showToast('₹500 added to your wallet!', 'success');
+            });
+
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Agility', 'Goals', 'Matches', 'Defending', 'Stamina', 'Teamwork'],
+                    datasets: [{
+                        label: 'Player Attributes',
+                        data: [78, 68, 85, 55, 90, 82],
+                        backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                        borderColor: 'rgba(37, 99, 235, 1)',
+                        pointBackgroundColor: 'rgba(37, 99, 235, 1)'
+                    }]
+                },
+                options: {
+                    scales: { r: { beginAtZero: true, max: 100, ticks: { display: false } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

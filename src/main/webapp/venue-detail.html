@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slotit - Venue Detail</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background-color: var(--bg, #F1F5F9); color: var(--text-primary, #0F172A); padding-bottom: calc(var(--nav-height, 68px) + 84px); }
+        .top-bar-hero { display: flex; align-items: center; padding: 16px 20px; background: transparent; position: absolute; top: 0; left: 0; right: 0; z-index: 10; color: white; }
+        .back-btn-hero { color: white; text-decoration: none; font-size: 1.25rem; font-weight: 700; margin-right: 16px; background: rgba(0,0,0,0.25); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; backdrop-filter: blur(4px); }
+        .top-bar-title { font-weight: 600; font-size: 1.125rem; }
+
+        .hero { height: 240px; background: linear-gradient(135deg, #10B981, #059669); display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; position: relative; color: white; }
+        .hero.football { background: linear-gradient(135deg, #10B981, #059669); }
+        .hero.cricket { background: linear-gradient(135deg, #F59E0B, #D97706); }
+        .hero.badminton { background: linear-gradient(135deg, #3B82F6, #2563EB); }
+        .hero.tennis { background: linear-gradient(135deg, #EAB308, #CA8A04); }
+        .hero.basketball { background: linear-gradient(135deg, #F97316, #EA580C); }
+        .hero-emoji { position: absolute; top: 46%; left: 50%; transform: translate(-50%, -50%); font-size: 5.5rem; opacity: 0.85; }
+        .hero-content { position: relative; z-index: 2; }
+        .venue-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 8px; }
+        .hero-badges { display: flex; gap: 8px; align-items: center; }
+        .hero-badge { background: rgba(255,255,255,0.22); backdrop-filter: blur(4px); padding: 4px 10px; border-radius: var(--radius-full, 9999px); font-size: 0.75rem; font-weight: 600; color: white; }
+
+        .content { padding: 20px; background: var(--surface, #FFF); border-radius: 24px 24px 0 0; margin-top: -20px; position: relative; z-index: 5; }
+        .info-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
+        .info-item { display: flex; align-items: center; gap: 4px; background: var(--bg); padding: 6px 12px; border-radius: 8px; }
+        .desc { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px; }
+
+        .section-title { font-size: 1.05rem; font-weight: 700; margin: 20px 0 12px; }
+        .photos { display: flex; gap: 12px; overflow-x: auto; margin-bottom: 20px; scrollbar-width: none; }
+        .photos::-webkit-scrollbar { display: none; }
+        .photo-box { width: 120px; height: 80px; flex-shrink: 0; background: var(--bg); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--text-secondary); gap: 4px; border: 1px solid var(--border); cursor: pointer; }
+        .photo-box span { font-size: 0.7rem; font-weight: 600; }
+
+        .date-picker { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 16px; scrollbar-width: none; }
+        .date-picker::-webkit-scrollbar { display: none; }
+        .date-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 62px; padding: 8px; border-radius: var(--radius-md); background: var(--bg); color: var(--text-secondary); cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
+        .date-pill.active { background: var(--primary); color: white; }
+        .date-day { font-size: 0.72rem; font-weight: 500; }
+        .date-num { font-size: 1.1rem; font-weight: 700; margin-top: 2px; }
+
+        .courts { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 16px; scrollbar-width: none; }
+        .court-chip { padding: 8px 16px; border-radius: var(--radius-full); background: var(--bg); font-size: 0.82rem; font-weight: 600; cursor: pointer; color: var(--text-secondary); border: 1.5px solid transparent; white-space: nowrap; font-family: inherit; }
+        .court-chip.active { background: var(--primary-light, #DBEAFE); color: var(--primary-dark, #1D4ED8); border-color: var(--primary); }
+
+        .slots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+        @media (min-width: 768px) { .slots-grid { grid-template-columns: repeat(4, 1fr); } }
+        .slot-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 6px; text-align: center; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; gap: 4px; border-left: 4px solid var(--border); transition: all 0.15s; }
+        .slot-card .price { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
+        .slot-card.available { border-left-color: var(--success, #059669); }
+        .slot-card.peak { border-left-color: var(--accent, #F97316); background: var(--accent-light, #FFF7ED); }
+        .slot-card.booked { border-left-color: var(--text-muted); background: var(--bg); color: var(--text-muted); cursor: not-allowed; text-decoration: line-through; opacity: 0.65; }
+        .slot-card.selected { border-color: var(--primary); border-left-width: 4px; background: var(--primary-light); color: var(--primary-dark); transform: translateY(-1px); }
+
+        .booking-bar { position: fixed; bottom: var(--nav-height, 68px); left: 50%; transform: translate(-50%, 150%); width: 100%; max-width: 480px; padding: 12px 20px; background: var(--surface); box-shadow: 0 -4px 20px rgba(0,0,0,0.12); z-index: 15; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); border-top: 1px solid var(--border); }
+        @media (min-width: 768px) { .booking-bar { bottom: var(--nav-height, 68px); max-width: 600px; border-radius: 16px 16px 0 0; } }
+        .booking-bar.visible { transform: translate(-50%, 0); }
+        .btn-book { width: 100%; background: var(--primary); color: white; padding: 14px; border-radius: var(--radius-md); font-size: 1rem; font-weight: 700; border: none; cursor: pointer; font-family: inherit; }
+    </style>
+</head>
+<body>
+    <div class="top-bar-hero">
+        <a href="home.html" class="back-btn-hero">←</a>
+        <div class="top-bar-title">Venue Details</div>
+    </div>
+
+    <div class="hero football" id="hero-section">
+        <div class="hero-emoji" id="hero-emoji">⚽</div>
+        <div class="hero-content">
+            <h1 class="venue-title" id="venue-title">GreenPark Football Arena</h1>
+            <div class="hero-badges">
+                <span class="hero-badge" id="venue-sport">Football</span>
+                <span class="hero-badge" id="venue-rating">⭐ 4.8 (120)</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="info-row">
+            <div class="info-item" id="venue-address">📍 Kavanad, Kollam</div>
+            <div class="info-item" id="venue-price">🏷️ From ₹800/hr</div>
+            <div class="info-item" id="venue-outdoor">☀️ Outdoor</div>
+        </div>
+
+        <p class="desc" id="venue-desc">Premium FIFA-grade 7-a-side artificial turf with LED floodlights, changing rooms, and ample parking.</p>
+
+        <div id="weather-section"></div>
+
+        <h3 class="section-title">📸 Turf Selfie Wall</h3>
+        <div class="photos" id="photo-wall">
+            <div class="photo-box">⚽<span>Match Night</span></div>
+            <div class="photo-box">🏟️<span>Floodlights</span></div>
+            <div class="photo-box">🥇<span>Finals 2026</span></div>
+            <div class="photo-box" onclick="showToast('Photo upload saved to MongoDB turf_photos!', 'success')">➕<span>Upload Photo</span></div>
+        </div>
+
+        <h3 class="section-title">📅 Select Date & Court</h3>
+        <div class="date-picker" id="date-picker"></div>
+        <div class="courts" id="courts-container"></div>
+
+        <h3 class="section-title">⏰ Available Time Slots</h3>
+        <div class="slots-grid" id="slots-grid"></div>
+    </div>
+
+    <div class="booking-bar" id="booking-bar">
+        <button class="btn-book" id="btn-book">Book This Slot — ₹800</button>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item"><span class="nav-icon">🏠</span><span>Home</span></a>
+        <a href="venue-detail.html" class="nav-item active"><span class="nav-icon">🔍</span><span>Explore</span></a>
+        <a href="my-bookings.html" class="nav-item"><span class="nav-icon">📋</span><span>Bookings</span></a>
+        <a href="squad-finder.html" class="nav-item"><span class="nav-icon">👥</span><span>Squad</span></a>
+        <a href="profile.html" class="nav-item"><span class="nav-icon">👤</span><span>Profile</span></a>
+    </nav>
+
+    <script src="js/app.js"></script>
+    <script src="js/weather.js"></script>
+    <script src="js/hotslot.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const catalog = window.SLOTIT_VENUES || [];
+
+            // Default to first venue in user's selected city if no ?id= param is provided
+            let defaultId = 1;
+            try {
+                const loc = JSON.parse(localStorage.getItem('slotit_location'));
+                if (loc && loc.name) {
+                    const cityMatch = catalog.find(v => v.city.toLowerCase() === loc.name.toLowerCase());
+                    if (cityMatch) defaultId = cityMatch.venueId;
+                }
+            } catch (e) {}
+
+            const venueId = parseInt(params.get('id') || String(defaultId), 10) || defaultId;
+
+            const SPORT_EMOJI = { football: '⚽', cricket: '🏏', badminton: '🏸', tennis: '🎾', basketball: '🏀' };
+            let venue = catalog.find(v => v.venueId === venueId || v.id === venueId) || catalog[0] || {
+                venueId: 1, name: 'GreenPark Football Arena', address: 'Kavanad, Kollam', city: 'Kollam',
+                latitude: 8.9001, longitude: 76.5512, sportType: 'football',
+                description: 'Premium FIFA-grade 7-a-side artificial turf with LED floodlights and changing rooms.',
+                rating: 4.8, totalRatings: 120, isOutdoor: true, minPrice: 600
+            };
+
+            const renderVenueHeader = () => {
+                const sportKey = (venue.sportType || 'football').toLowerCase();
+                const sportLabel = sportKey.charAt(0).toUpperCase() + sportKey.slice(1);
+                const heroEl = document.getElementById('hero-section');
+                heroEl.className = `hero ${SPORT_EMOJI[sportKey] ? sportKey : 'football'}`;
+                document.getElementById('hero-emoji').textContent = SPORT_EMOJI[sportKey] || '🏟️';
+                document.getElementById('venue-title').textContent = venue.name;
+                document.getElementById('venue-sport').textContent = sportLabel;
+                document.getElementById('venue-rating').textContent = `⭐ ${Number(venue.rating || 4.5).toFixed(1)} (${venue.totalRatings || 50})`;
+                document.getElementById('venue-address').textContent = `📍 ${venue.address || venue.city || 'Kollam'}`;
+                document.getElementById('venue-price').textContent = `🏷️ From ₹${Number(venue.minPrice || 600).toFixed(0)}/hr`;
+                document.getElementById('venue-outdoor').textContent = venue.isOutdoor === false ? '🏠 Indoor' : '☀️ Outdoor';
+                document.getElementById('venue-desc').textContent = venue.description || '';
+            };
+
+            renderVenueHeader();
+
+            // Weather Card via weather.js
+            const weatherContainer = document.getElementById('weather-section');
+            const updateWeather = async (isoDate) => {
+                if (typeof fetchWeather === 'function' && typeof renderWeatherCard === 'function') {
+                    const w = await fetchWeather(venue.latitude || 8.88, venue.longitude || 76.59, new Date(isoDate));
+                    weatherContainer.innerHTML = renderWeatherCard(w, venue.isOutdoor !== false);
+                }
+            };
+
+            // Build 7-day Date Picker
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const datePicker = document.getElementById('date-picker');
+            const today = new Date();
+            let selectedIsoDate = toISODate(today);
+            let selectedDateLabel = `Today, ${today.toLocaleString('default', { month: 'short' })} ${today.getDate()}`;
+            let selectedCourtId = null;
+            let selectedCourtName = '';
+            let allSlotsForDate = [];
+            let selectedSlot = null;
+
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() + i);
+                const iso = toISODate(d);
+                const dayName = i === 0 ? 'Today' : (i === 1 ? 'Tmw' : days[d.getDay()]);
+                const label = `${dayName}, ${d.toLocaleString('default', { month: 'short' })} ${d.getDate()}`;
+
+                const pill = document.createElement('div');
+                pill.className = `date-pill ${i === 0 ? 'active' : ''}`;
+                pill.innerHTML = `<span class="date-day">${dayName}</span><span class="date-num">${d.getDate()}</span>`;
+                pill.addEventListener('click', async () => {
+                    document.querySelectorAll('.date-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    selectedIsoDate = iso;
+                    selectedDateLabel = label;
+                    updateWeather(selectedIsoDate);
+                    await loadSlotsForDate();
+                });
+                datePicker.appendChild(pill);
+            }
+
+            updateWeather(selectedIsoDate);
+
+            // Load Courts and Slots
+            const courtsContainer = document.getElementById('courts-container');
+            const slotsGrid = document.getElementById('slots-grid');
+
+            const clearSelection = () => {
+                selectedSlot = null;
+                document.getElementById('booking-bar').classList.remove('visible');
+            };
+
+            const renderCourts = (courts) => {
+                courtsContainer.innerHTML = '';
+                courts.forEach((c, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = `court-chip ${(selectedCourtId ? c.courtId === selectedCourtId : idx === 0) ? 'active' : ''}`;
+                    btn.textContent = `${c.courtName} (₹${Number(c.hourlyRate).toFixed(0)})`;
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.court-chip').forEach(ch => ch.classList.remove('active'));
+                        btn.classList.add('active');
+                        selectedCourtId = c.courtId;
+                        selectedCourtName = c.courtName;
+                        clearSelection();
+                        renderSlotsGrid();
+                    });
+                    courtsContainer.appendChild(btn);
+                });
+                if (!selectedCourtId && courts.length) {
+                    selectedCourtId = courts[0].courtId;
+                    selectedCourtName = courts[0].courtName;
+                }
+            };
+
+            const renderSlotsGrid = () => {
+                slotsGrid.innerHTML = '';
+                const localBooked = getLocalStore('slotit_booked_slots', []);
+                const filtered = selectedCourtId
+                    ? allSlotsForDate.filter(s => s.courtId === selectedCourtId)
+                    : allSlotsForDate;
+
+                filtered.forEach(s => {
+                    const isBooked = (s.status || '').toLowerCase() !== 'available' || localBooked.includes(s.slotId);
+                    const isPeak = Boolean(s.isPeak);
+                    const price = Number(s.finalPrice || (isPeak ? s.hourlyRate * (s.peakMultiplier || 1.5) : s.hourlyRate) || 800);
+                    const timeLabel = formatTime(s.startTime);
+
+                    const card = document.createElement('div');
+                    card.className = `slot-card ${isBooked ? 'booked' : (isPeak ? 'peak available' : 'available')}`;
+                    card.innerHTML = `
+                        <div>${timeLabel}</div>
+                        <div class="price">${isBooked ? 'Booked' : `${isPeak ? '🔥 ' : ''}₹${price.toFixed(0)}`}</div>
+                    `;
+
+                    if (!isBooked) {
+                        card.addEventListener('click', () => {
+                            document.querySelectorAll('.slot-card').forEach(el => el.classList.remove('selected'));
+                            card.classList.add('selected');
+                            selectedSlot = {
+                                slotId: s.slotId,
+                                courtId: s.courtId,
+                                courtName: s.courtName || selectedCourtName,
+                                startTime: s.startTime,
+                                endTime: s.endTime,
+                                time: `${formatTime(s.startTime)} – ${formatTime(s.endTime)}`,
+                                hourlyRate: Number(s.hourlyRate || price),
+                                price: price,
+                                isPeak: isPeak
+                            };
+                            document.getElementById('btn-book').textContent = `Book ${timeLabel} — ₹${price.toFixed(0)}`;
+                            document.getElementById('booking-bar').classList.add('visible');
+                        });
+                    }
+                    slotsGrid.appendChild(card);
+                });
+            };
+
+            const buildFallbackSlots = () => {
+                const hours = [6, 7, 8, 9, 10, 16, 17, 18, 19, 20, 21];
+                const base = Number(venue.minPrice || 800);
+                const venueCourts = (venue.courts && venue.courts.length) ? venue.courts : [
+                    { courtId: venueId * 2 - 1, courtName: 'Court A', hourlyRate: base, peakMultiplier: 1.5 },
+                    { courtId: venueId * 2, courtName: 'Court B', hourlyRate: base + 200, peakMultiplier: 1.5 }
+                ];
+                const list = [];
+                let idCounter = venueId * 1000 + 1;
+                venueCourts.forEach((c, cIdx) => {
+                    hours.forEach(h => {
+                        const isPeak = h >= 18 && h <= 20;
+                        const rate = Number(c.hourlyRate || base);
+                        const mult = Number(c.peakMultiplier || 1.5);
+                        list.push({
+                            slotId: idCounter++,
+                            courtId: c.courtId,
+                            courtName: c.courtName,
+                            slotDate: selectedIsoDate,
+                            startTime: `${String(h).padStart(2, '0')}:00:00`,
+                            endTime: `${String(h + 1).padStart(2, '0')}:00:00`,
+                            status: (h === 18 && cIdx === 0) ? 'booked' : 'available',
+                            isPeak,
+                            hourlyRate: rate,
+                            peakMultiplier: mult,
+                            finalPrice: isPeak ? Math.round(rate * mult) : rate
+                        });
+                    });
+                });
+                return list;
+            };
+
+            const applySlotsAndCourts = (slotsList) => {
+                allSlotsForDate = slotsList;
+                const courtMap = new Map();
+                allSlotsForDate.forEach(s => {
+                    if (!courtMap.has(s.courtId)) {
+                        courtMap.set(s.courtId, {
+                            courtId: s.courtId,
+                            courtName: s.courtName || `Court ${s.courtId}`,
+                            hourlyRate: s.hourlyRate || venue.minPrice || 800
+                        });
+                    }
+                });
+                const courts = Array.from(courtMap.values());
+                if (!courts.some(c => c.courtId === selectedCourtId)) {
+                    selectedCourtId = courts.length ? courts[0].courtId : null;
+                    selectedCourtName = courts.length ? courts[0].courtName : 'Court A';
+                }
+                renderCourts(courts);
+                renderSlotsGrid();
+            };
+
+            const loadSlotsForDate = async () => {
+                clearSelection();
+                // Render local slots immediately (0ms) so mobile UI never lags
+                applySlotsAndCourts(buildFallbackSlots());
+                try {
+                    const data = await apiCall(`/slots?venue_id=${venueId}&date=${selectedIsoDate}`);
+                    const apiSlots = asList(data);
+                    if (apiSlots.length) {
+                        applySlotsAndCourts(apiSlots);
+                    }
+                } catch (e) {
+                    notifyOffline();
+                }
+            };
+
+            // Render slots immediately and optionally refresh venue from API
+            loadSlotsForDate();
+            apiCall(`/venues?id=${venueId}`).then(apiVenue => {
+                if (apiVenue && (apiVenue.venueId || apiVenue.id)) {
+                    venue = { ...venue, ...apiVenue, courts: venue.courts };
+                    renderVenueHeader();
+                }
+            }).catch(() => notifyOffline());
+
+            document.getElementById('btn-book').addEventListener('click', () => {
+                if (!selectedSlot) return;
+                const bookingData = {
+                    slotId: selectedSlot.slotId,
+                    venueId: venueId,
+                    venue: venue.name,
+                    court: selectedSlot.courtName || selectedCourtName,
+                    date: selectedDateLabel,
+                    isoDate: selectedIsoDate,
+                    time: selectedSlot.time,
+                    basePrice: selectedSlot.hourlyRate,
+                    price: selectedSlot.price,
+                    isPeak: selectedSlot.isPeak
+                };
+                localStorage.setItem('bookingSlot', JSON.stringify(bookingData));
+                window.location.href = 'checkout.html';
+            });
+        });
+    </script>
+</body>
+</html>

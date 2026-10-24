@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard - Slotit</title>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap' rel='stylesheet'>
+    <link rel='stylesheet' href='css/styles.css'>
+    <style>
+        .dashboard-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-card { padding: 15px 10px; border-radius: var(--radius-md); text-align: center; display: flex; flex-direction: column; gap: 5px; }
+        .stat-value { font-size: 1.25rem; font-weight: 700; }
+        .stat-label { font-size: 0.75rem; color: var(--text-secondary); }
+        .bg-primary-light { background-color: var(--primary-light); color: var(--primary-dark); }
+        .bg-success-light { background-color: var(--success-light); color: var(--success); }
+        .bg-accent-light { background-color: var(--accent-light); color: var(--accent); }
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .timeline-item { display: flex; gap: 15px; }
+        .timeline-time { width: 65px; text-align: right; font-size: 0.78rem; color: var(--text-muted); padding-top: 10px; font-weight: 600; }
+        .timeline-content { flex: 1; padding: 12px; border-radius: var(--radius-md); background: var(--surface); border: 1px solid var(--border); }
+        .timeline-content.empty { border: 2px dashed var(--border); background: transparent; display: flex; align-items: center; color: var(--text-muted); }
+        .chart-container { background: var(--surface); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 20px; }
+        .court-management { display: flex; flex-direction: column; gap: 10px; margin-bottom: 80px; }
+        .court-card { background: var(--surface); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+
+        @media (min-width: 768px) {
+            .desktop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="top-bar-title" id="owner-header-title">🏟️ Venue Owner Dashboard</div>
+        <button class="btn btn-outline btn-sm" onclick="window.location.href='home.html'">Player View →</button>
+    </div>
+
+    <div class="page-content">
+        <div class="desktop-grid">
+            <div>
+                <div class="dashboard-stats">
+                    <div class="stat-card bg-primary-light">
+                        <div class="stat-label">Today's Bookings</div>
+                        <div class="stat-value" id="stat-today">12</div>
+                    </div>
+                    <div class="stat-card bg-success-light">
+                        <div class="stat-label">Week Revenue</div>
+                        <div class="stat-value" id="stat-revenue">₹24,500</div>
+                    </div>
+                    <div class="stat-card bg-accent-light">
+                        <div class="stat-label">Occupancy</div>
+                        <div class="stat-value" id="stat-occupancy">78%</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 class="fw-600 mb-3 text-sm">Revenue (Last 7 Days)</h3>
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="fw-600 mb-3 text-sm">Recent & Today's Bookings</h3>
+                <div class="timeline" id="recent-bookings-list"></div>
+            </div>
+        </div>
+
+        <h3 class="fw-600 mb-3 text-sm mt-4">Manage Courts</h3>
+        <div class="court-management">
+            <div class="court-card">
+                <div>
+                    <div class="fw-600">Turf A (7-a-side)</div>
+                    <div class="text-sm text-secondary">₹800/hr • Peak 1.5x (₹1,200)</div>
+                </div>
+                <span class="badge badge-success">Active</span>
+            </div>
+            <div class="court-card">
+                <div>
+                    <div class="fw-600">Turf B (5-a-side)</div>
+                    <div class="text-sm text-secondary">₹600/hr • Peak 1.5x (₹900)</div>
+                </div>
+                <span class="badge badge-success">Active</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="owner-dashboard.html" class="nav-item active">
+            <div class="nav-icon">📊</div>
+            <span>Dashboard</span>
+        </a>
+        <a href="my-bookings.html" class="nav-item">
+            <div class="nav-icon">📋</div>
+            <span>Bookings</span>
+        </a>
+        <a href="tournaments.html" class="nav-item">
+            <div class="nav-icon">🏆</div>
+            <span>Tournament</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <div class="nav-icon">👤</div>
+            <span>Profile</span>
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const user = getCurrentUser();
+            const ownerId = (user && (user.role === 'owner' || user.role === 'admin')) ? (user.userId || user.id || 4) : 4;
+            if (user && user.name) {
+                document.getElementById('owner-header-title').textContent = `🏟️ ${user.name} — Dashboard`;
+            }
+
+            let labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            let values = [3200, 2800, 3500, 4100, 5600, 8200, 7500];
+            let recent = [
+                { username: 'Ebin Biju Abraham', time: '18:00:00', venue: 'GreenPark Football Arena', court: 'Turf A', amount: 1200, status: 'completed' },
+                { username: 'Tharun Bhaskaran', time: '18:00:00', venue: 'SmashPoint Badminton Hub', court: 'Wooden Court 1', amount: 375, status: 'completed' },
+                { username: 'Afroz Shanavas', time: '19:00:00', venue: 'CricketZone Nets', court: 'Box Cricket Turf', amount: 1500, status: 'completed' }
+            ];
+
+            try {
+                const data = await apiCall(`/owner/dashboard?owner_id=${ownerId}`);
+                if (data) {
+                    document.getElementById('stat-today').textContent = data.todayBookingCount ?? 3;
+                    const rev = Number(data.weekRevenue || 0);
+                    document.getElementById('stat-revenue').textContent = `₹${rev > 0 ? rev.toLocaleString('en-IN') : '3,075'}`;
+                    if (Array.isArray(data.recentBookings) && data.recentBookings.length > 0) {
+                        recent = data.recentBookings;
+                    }
+                    if (data.dailyRevenue && Object.keys(data.dailyRevenue).length > 0) {
+                        labels = Object.keys(data.dailyRevenue);
+                        values = Object.values(data.dailyRevenue).map(Number);
+                    }
+                }
+            } catch (e) {
+                notifyOffline();
+            }
+
+            const listEl = document.getElementById('recent-bookings-list');
+            listEl.innerHTML = '';
+            recent.forEach(r => {
+                const isRefunded = (r.status || '').toLowerCase() === 'refunded';
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+                item.innerHTML = `
+                    <div class="timeline-time">${formatTime(r.time || '18:00:00')}</div>
+                    <div class="timeline-content">
+                        <div class="flex justify-between items-center mb-8">
+                            <span class="fw-600">${r.username || 'Player'}</span>
+                            <span class="badge ${isRefunded ? 'badge-warning' : 'badge-success'} text-xs">${isRefunded ? 'Refunded' : 'Paid'}</span>
+                        </div>
+                        <div class="text-sm text-secondary">${r.venue || 'Arena'} (${r.court || 'Court A'}) • ₹${Number(r.amount || 0).toFixed(0)}</div>
+                    </div>
+                `;
+                listEl.appendChild(item);
+            });
+
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Revenue (₹)',
+                        data: values,
+                        backgroundColor: '#2563EB',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

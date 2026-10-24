@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slotit - My Bookings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background-color: var(--bg, #F1F5F9); color: var(--text-primary, #0F172A); padding-bottom: calc(var(--nav-height, 68px) + 20px); }
+        .top-bar { padding: 16px 20px; background: var(--surface, #FFF); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .top-bar-title { font-weight: 800; font-size: 1.5rem; margin: 0; }
+
+        .tabs { display: flex; padding: 16px 20px 0; gap: 8px; background: var(--surface); border-bottom: 1px solid var(--border); }
+        .tab { padding: 10px 20px; font-weight: 600; font-size: 0.875rem; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; }
+        .tab.active { color: var(--primary, #2563EB); border-bottom-color: var(--primary); }
+
+        .bookings-list { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+        .booking-card { background: var(--surface); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-left: 4px solid; transition: opacity 0.3s, transform 0.3s; }
+        .booking-card.confirmed { border-left-color: var(--success, #059669); }
+        .booking-card.pending { border-left-color: var(--warning, #D97706); }
+        .booking-card.past { border-left-color: var(--text-muted, #94A3B8); opacity: 0.88; }
+        .booking-card.removing { opacity: 0; transform: translateX(20px); }
+
+        .b-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .b-title { font-weight: 700; font-size: 1rem; margin: 0 0 4px; }
+        .b-subtitle { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; text-transform: capitalize; }
+
+        .badge { padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700; text-transform: capitalize; }
+        .badge-success { background: var(--success-light, #D1FAE5); color: var(--success, #059669); }
+        .badge-warning { background: var(--warning-light, #FEF3C7); color: var(--warning, #D97706); }
+        .badge-primary { background: var(--primary-light, #DBEAFE); color: var(--primary, #2563EB); }
+
+        .b-details { background: var(--bg); padding: 12px; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; font-weight: 600; }
+
+        .b-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+        .btn-sm { padding: 8px 16px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; cursor: pointer; border: none; font-family: inherit; }
+        .btn-danger { background: var(--error-light, #FEE2E2); color: var(--error, #DC2626); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-primary); }
+
+        .empty-state { padding: 40px 20px; text-align: center; color: var(--text-secondary); display: none; }
+        .empty-state h3 { color: var(--text-primary); margin: 16px 0 8px; }
+        .empty-state a { color: var(--primary); font-weight: 600; text-decoration: none; display: inline-block; margin-top: 16px; }
+
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--surface); padding: 24px; border-radius: var(--radius-lg); width: 90%; max-width: 360px; text-align: center; }
+        .stars { font-size: 2rem; display: flex; justify-content: center; gap: 8px; margin: 16px 0; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h1 class="top-bar-title">My Bookings</h1>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-target="upcoming">Upcoming</div>
+        <div class="tab" data-target="past">Past & Refunded</div>
+    </div>
+
+    <div class="bookings-list" id="upcoming-list"></div>
+    <div class="bookings-list" id="past-list" style="display: none;"></div>
+
+    <div class="empty-state" id="empty-state">
+        <div style="font-size: 4rem;">📋</div>
+        <h3>No bookings found</h3>
+        <p>You haven't made any bookings in this category yet.</p>
+        <a href="home.html">Find a Venue →</a>
+    </div>
+
+    <!-- Star Rating Modal -->
+    <div class="modal" id="rate-modal">
+        <div class="modal-content">
+            <h3 style="margin:0 0 6px;">Rate <span id="rate-venue-name">Venue</span></h3>
+            <p class="text-sm text-secondary">Tap stars to rate your turf experience</p>
+            <div class="stars" id="star-row">
+                <span data-star="1">⭐</span>
+                <span data-star="2">⭐</span>
+                <span data-star="3">⭐</span>
+                <span data-star="4">⭐</span>
+                <span data-star="5">⭐</span>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="submitRating()">Submit Rating</button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item"><span class="nav-icon">🏠</span><span>Home</span></a>
+        <a href="venue-detail.html" class="nav-item"><span class="nav-icon">🔍</span><span>Explore</span></a>
+        <a href="my-bookings.html" class="nav-item active"><span class="nav-icon">📋</span><span>Bookings</span></a>
+        <a href="squad-finder.html" class="nav-item"><span class="nav-icon">👥</span><span>Squad</span></a>
+        <a href="profile.html" class="nav-item"><span class="nav-icon">👤</span><span>Profile</span></a>
+    </nav>
+
+    <script src="js/app.js"></script>
+    <script>
+        function submitRating() {
+            document.getElementById('rate-modal').classList.remove('active');
+            showToast('Thank you! Rating saved.', 'success');
+        }
+
+        function openRateModal(venueName) {
+            document.getElementById('rate-venue-name').textContent = venueName;
+            document.getElementById('rate-modal').classList.add('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = getCurrentUser() || { id: 1, userId: 1 };
+            const userId = user.userId || user.id || 1;
+
+            const upcomingEl = document.getElementById('upcoming-list');
+            const pastEl = document.getElementById('past-list');
+            const emptyState = document.getElementById('empty-state');
+            let currentTab = 'upcoming';
+
+            const DEFAULT_UPCOMING = [
+                { bookingId: 101, venueName: 'GreenPark Football Arena', sportType: 'football', courtName: 'Turf A (7-a-side)', slotDate: 'Today', startTime: '18:00:00', amountPaid: 1200, paymentStatus: 'completed' },
+                { bookingId: 102, venueName: 'SmashPoint Badminton Hub', sportType: 'badminton', courtName: 'Wooden Court 1', slotDate: 'Tomorrow', startTime: '08:00:00', amountPaid: 300, paymentStatus: 'completed' }
+            ];
+            const DEFAULT_PAST = [
+                { bookingId: 90, venueName: 'CourtKing Basketball Arena', sportType: 'basketball', courtName: 'Main Arena Court', slotDate: '2026-09-25', startTime: '19:00:00', amountPaid: 600, paymentStatus: 'completed' }
+            ];
+
+            let upcomingBookings = [];
+            let pastBookings = [];
+
+            const loadBookings = async () => {
+                try {
+                    const [up, pa] = await Promise.all([
+                        apiCall(`/bookings/my?user_id=${userId}&type=upcoming`),
+                        apiCall(`/bookings/my?user_id=${userId}&type=past`)
+                    ]);
+                    upcomingBookings = asList(up);
+                    pastBookings = asList(pa);
+                } catch (e) {
+                    const localList = getLocalStore('slotit_local_bookings', null);
+                    if (localList === null) {
+                        setLocalStore('slotit_local_bookings', [...DEFAULT_UPCOMING, ...DEFAULT_PAST.map(x => ({ ...x, isPast: true }))]);
+                    }
+                    const all = getLocalStore('slotit_local_bookings', DEFAULT_UPCOMING);
+                    upcomingBookings = all.filter(b => !b.isPast && b.paymentStatus !== 'refunded');
+                    pastBookings = all.filter(b => b.isPast || b.paymentStatus === 'refunded');
+                }
+                renderLists();
+            };
+
+            const checkEmpty = () => {
+                const activeList = currentTab === 'upcoming' ? upcomingEl : pastEl;
+                upcomingEl.style.display = currentTab === 'upcoming' ? 'flex' : 'none';
+                pastEl.style.display = currentTab === 'past' ? 'flex' : 'none';
+                if (activeList.children.length === 0) {
+                    activeList.style.display = 'none';
+                    emptyState.style.display = 'block';
+                } else {
+                    emptyState.style.display = 'none';
+                }
+            };
+
+            const renderLists = () => {
+                upcomingEl.innerHTML = '';
+                pastEl.innerHTML = '';
+
+                upcomingBookings.forEach(b => {
+                    const card = document.createElement('div');
+                    card.className = 'booking-card confirmed';
+                    card.innerHTML = `
+                        <div class="b-header">
+                            <div>
+                                <h3 class="b-title">${b.venueName || 'Sports Venue'}</h3>
+                                <div class="b-subtitle">${b.sportType || 'Sport'} • ${b.courtName || 'Court A'}</div>
+                            </div>
+                            <div class="badge badge-success">${b.paymentStatus === 'completed' ? 'Confirmed' : b.paymentStatus}</div>
+                        </div>
+                        <div class="b-details">
+                            <div>📅 ${b.slotDate} • ${formatTime(b.startTime)}</div>
+                            <div>₹${Number(b.amountPaid || 0).toFixed(0)}</div>
+                        </div>
+                        <div class="b-actions">
+                            <button class="btn-sm btn-danger cancel-btn">Cancel & Refund</button>
+                        </div>
+                    `;
+                    card.querySelector('.cancel-btn').addEventListener('click', async () => {
+                        if (!confirm('Cancel this booking and refund the amount to your wallet?')) return;
+                        const refundCurrentUser = () => {
+                            const cur = getCurrentUser();
+                            if (cur) {
+                                cur.walletBalance = Number(cur.walletBalance || 0) + Number(b.amountPaid || 0);
+                                setCurrentUser(cur);
+                            }
+                            const all = getLocalStore('slotit_local_bookings', []);
+                            const updated = all.map(item => item.bookingId === b.bookingId ? { ...item, paymentStatus: 'refunded', isPast: true } : item);
+                            setLocalStore('slotit_local_bookings', updated);
+                        };
+                        try {
+                            await apiCall(`/bookings?booking_id=${b.bookingId}&user_id=${userId}`, 'DELETE');
+                            refundCurrentUser();
+                            showToast('Booking cancelled & refunded to wallet!', 'success');
+                        } catch (err) {
+                            if (!err.isNetwork) {
+                                showToast(err.message || 'Could not cancel booking', 'error');
+                                return;
+                            }
+                            refundCurrentUser();
+                            showToast('Booking cancelled & wallet refunded!', 'success');
+                        }
+                        card.classList.add('removing');
+                        setTimeout(() => loadBookings(), 300);
+                    });
+                    upcomingEl.appendChild(card);
+                });
+
+                pastBookings.forEach(b => {
+                    const isRefunded = (b.paymentStatus || '').toLowerCase() === 'refunded';
+                    const card = document.createElement('div');
+                    card.className = 'booking-card past';
+                    card.innerHTML = `
+                        <div class="b-header">
+                            <div>
+                                <h3 class="b-title">${b.venueName || 'Sports Venue'}</h3>
+                                <div class="b-subtitle">${b.sportType || 'Sport'} • ${b.courtName || 'Court A'}</div>
+                            </div>
+                            <div class="badge ${isRefunded ? 'badge-warning' : 'badge-primary'}">${isRefunded ? 'Refunded' : 'Completed'}</div>
+                        </div>
+                        <div class="b-details">
+                            <div>📅 ${b.slotDate} • ${formatTime(b.startTime)}</div>
+                            <div>₹${Number(b.amountPaid || 0).toFixed(0)}</div>
+                        </div>
+                        <div class="b-actions">
+                            <button class="btn-sm btn-outline rate-btn">⭐ Rate This Turf</button>
+                        </div>
+                    `;
+                    card.querySelector('.rate-btn').addEventListener('click', () => openRateModal(b.venueName || 'Venue'));
+                    pastEl.appendChild(card);
+                });
+
+                checkEmpty();
+            };
+
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentTab = tab.dataset.target;
+                    checkEmpty();
+                });
+            });
+
+            await loadBookings();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563EB">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Slotit">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <title>Slotit</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background-color: var(--bg, #F1F5F9); color: var(--text-primary, #0F172A); padding-bottom: var(--nav-height, 68px); }
+        .greeting-bar { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: var(--surface, #FFF); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .greeting-text { font-size: 1.25rem; font-weight: 700; margin: 0; }
+        .location { font-size: 0.875rem; color: var(--text-secondary, #64748B); display: flex; align-items: center; gap: 4px; }
+        .bell-icon { font-size: 1.25rem; }
+        .search-container { padding: 16px 20px; background: var(--surface, #FFF); }
+        .search-input { width: 100%; padding: 12px 16px; border-radius: var(--radius-full, 9999px); border: 1px solid var(--border, #E2E8F0); background: var(--bg, #F1F5F9); outline: none; font-family: inherit; font-size: 1rem; box-sizing: border-box; }
+        .search-input:focus { border-color: var(--primary, #2563EB); }
+        .filters { display: flex; gap: 8px; overflow-x: auto; padding: 0 20px 16px; background: var(--surface, #FFF); scrollbar-width: none; }
+        .filters::-webkit-scrollbar { display: none; }
+        .chip { padding: 8px 16px; border-radius: var(--radius-full, 9999px); background: var(--bg, #F1F5F9); color: var(--text-secondary, #64748B); white-space: nowrap; font-weight: 500; border: none; cursor: pointer; font-family: inherit; }
+        .chip.active { background: var(--primary, #2563EB); color: white; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 20px 12px; }
+        .section-title { font-size: 1.125rem; font-weight: 700; margin: 0; }
+        .see-all { color: var(--primary, #2563EB); text-decoration: none; font-size: 0.875rem; font-weight: 600; }
+        .venues-grid { padding: 0 20px; display: grid; gap: 16px; grid-template-columns: 1fr; }
+        @media (min-width: 768px) { .venues-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); } }
+        .venue-card { background: var(--surface, #FFF); border-radius: var(--radius-lg, 16px); overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-decoration: none; color: inherit; display: flex; flex-direction: column; transition: transform 0.2s; animation: fadeUp 0.5s ease-out forwards; opacity: 0; transform: translateY(10px); }
+        .venue-card:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .venue-header { height: 100px; display: flex; align-items: center; justify-content: center; font-size: 3rem; position: relative; }
+        .venue-header.football { background: linear-gradient(135deg, #10B981, #059669); }
+        .venue-header.cricket { background: linear-gradient(135deg, #F59E0B, #D97706); }
+        .venue-header.badminton { background: linear-gradient(135deg, #3B82F6, #2563EB); }
+        .venue-header.tennis { background: linear-gradient(135deg, #EAB308, #CA8A04); }
+        .venue-header.basketball { background: linear-gradient(135deg, #F97316, #EA580C); }
+        .sport-badge { position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: var(--radius-sm, 8px); font-size: 0.75rem; font-weight: 700; color: var(--text-primary); text-transform: uppercase; }
+        .venue-info { padding: 16px; flex-grow: 1; display: flex; flex-direction: column; }
+        .venue-name { font-size: 1rem; font-weight: 700; margin: 0 0 4px; }
+        .venue-loc { font-size: 0.875rem; color: var(--text-secondary); margin: 0 0 12px; display: flex; justify-content: space-between; }
+        .venue-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .rating { display: flex; align-items: center; gap: 4px; font-size: 0.875rem; font-weight: 600; }
+        .rating-star { color: #FBBF24; }
+        .price { color: var(--accent, #F97316); font-weight: 700; font-size: 1rem; }
+        .tags { display: flex; gap: 8px; margin-bottom: 16px; }
+        .tag { background: var(--bg); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); }
+        .book-btn { width: 100%; background: var(--primary, #2563EB); color: white; border: none; padding: 10px; border-radius: var(--radius-md, 12px); font-weight: 600; font-family: inherit; cursor: pointer; text-align: center; }
+        .city-bar { display: none; gap: 8px; overflow-x: auto; padding: 10px 20px; background: var(--primary-light, #DBEAFE); border-bottom: 1px solid var(--border); scrollbar-width: none; align-items: center; }
+        .city-bar.open { display: flex; }
+        .city-chip { padding: 6px 14px; border-radius: 9999px; background: white; color: var(--text-primary); font-size: 0.8rem; font-weight: 600; border: 1px solid var(--border); cursor: pointer; white-space: nowrap; }
+        .city-chip.active { background: var(--primary, #2563EB); color: white; border-color: var(--primary, #2563EB); }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="greeting-bar">
+        <div>
+            <h1 class="greeting-text" id="greeting">Hey, Player 👋</h1>
+            <div class="location" id="location-toggle" style="cursor:pointer; user-select:none;" title="Tap to switch city">
+                <span id="location-label">📍 Kollam, Kerala</span>
+                <span style="font-size:0.75rem; color:var(--primary); font-weight:700; margin-left:4px;">Change ▾</span>
+            </div>
+        </div>
+        <a href="location.html" class="bell-icon" style="text-decoration:none;" title="Change Location">📍</a>
+    </div>
+
+    <div class="city-bar" id="city-bar">
+        <span style="font-size:0.75rem; font-weight:700; color:var(--primary-dark);">City:</span>
+        <button class="city-chip" data-city="Kollam">Kollam</button>
+        <button class="city-chip" data-city="Kochi">Kochi</button>
+        <button class="city-chip" data-city="Trivandrum">Trivandrum</button>
+        <button class="city-chip" data-city="Calicut">Calicut</button>
+        <button class="city-chip" data-city="All">All Cities</button>
+    </div>
+    
+    <div class="search-container">
+        <input type="text" class="search-input" placeholder="🔍 Search venues, sports, or city...">
+    </div>
+    
+    <div class="filters" id="sport-filters">
+        <button class="chip active" data-sport="All">All</button>
+        <button class="chip" data-sport="Football">⚽ Football</button>
+        <button class="chip" data-sport="Cricket">🏏 Cricket</button>
+        <button class="chip" data-sport="Badminton">🏸 Badminton</button>
+        <button class="chip" data-sport="Tennis">🎾 Tennis</button>
+        <button class="chip" data-sport="Basketball">🏀 Basketball</button>
+    </div>
+    
+    <div class="section-header">
+        <h2 class="section-title" id="venues-heading">Nearby Venues</h2>
+        <a href="#" class="see-all" id="see-all-link">All Cities →</a>
+    </div>
+    
+    <div class="venues-grid" id="venues-list">
+        <!-- Generated by JS -->
+    </div>
+    
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item active"><span class="nav-icon">🏠</span><span>Home</span></a>
+        <a href="venue-detail.html" class="nav-item"><span class="nav-icon">🔍</span><span>Explore</span></a>
+        <a href="my-bookings.html" class="nav-item"><span class="nav-icon">📋</span><span>Bookings</span></a>
+        <a href="squad-finder.html" class="nav-item"><span class="nav-icon">👥</span><span>Squad</span></a>
+        <a href="profile.html" class="nav-item"><span class="nav-icon">👤</span><span>Profile</span></a>
+    </nav>
+    
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = getCurrentUser();
+            const userName = (user && user.name) ? user.name.split(' ')[0] : 'Player';
+            document.getElementById('greeting').innerText = `Hey, ${userName} 👋`;
+
+            const SPORT_EMOJI = { football: '⚽', cricket: '🏏', badminton: '🏸', tennis: '🎾', basketball: '🏀' };
+
+            const mapVenue = (v) => {
+                const sportRaw = (v.sportType || v.sport || 'Football').toString();
+                const key = sportRaw.toLowerCase().split(/[,\s/]/)[0];
+                const sport = key.charAt(0).toUpperCase() + key.slice(1);
+                const price = v.minPrice ?? v.hourlyRate ?? v.price ?? 600;
+                return {
+                    id: v.venueId ?? v.id,
+                    name: v.name,
+                    sport,
+                    emoji: SPORT_EMOJI[key] || '🏟️',
+                    typeClass: SPORT_EMOJI[key] ? key : 'football',
+                    dist: v.distance ? formatDistance(v.distance) : (v.dist || ''),
+                    rating: Number(v.rating || 4.6).toFixed(1),
+                    revs: v.totalRatings ?? v.revs ?? 60,
+                    price: price,
+                    indoor: v.isOutdoor === false || v.outdoor === false || v.indoor === true,
+                    city: v.city || 'Kollam',
+                    address: v.address || v.city || 'Kollam'
+                };
+            };
+
+            const catalogVenues = (window.SLOTIT_VENUES || []).map(mapVenue);
+            let allVenues = [...catalogVenues];
+
+            // Determine current city from localStorage ('slotit_location')
+            let loc = null;
+            try { loc = JSON.parse(localStorage.getItem('slotit_location')); } catch (e) {}
+
+            // Map GPS coordinates to nearest Kerala city if GPS was used
+            const detectNearestCity = (lat, lng) => {
+                const cities = [
+                    { name: 'Kollam', lat: 8.8932, lng: 76.6141 },
+                    { name: 'Kochi', lat: 9.9312, lng: 76.2673 },
+                    { name: 'Trivandrum', lat: 8.5241, lng: 76.9366 },
+                    { name: 'Calicut', lat: 11.2588, lng: 75.7804 }
+                ];
+                let best = 'Kollam', minD = Infinity;
+                cities.forEach(c => {
+                    const d = Math.hypot(lat - c.lat, lng - c.lng);
+                    if (d < minD) { minD = d; best = c.name; }
+                });
+                return best;
+            };
+
+            let currentCity = 'Kollam';
+            if (loc && loc.type === 'city' && loc.name) {
+                currentCity = loc.name;
+            } else if (loc && loc.type === 'gps' && loc.lat != null) {
+                currentCity = detectNearestCity(loc.lat, loc.lng);
+            }
+
+            let currentSport = 'All';
+            let searchTerm = '';
+            const venuesList = document.getElementById('venues-list');
+            const locationLabel = document.getElementById('location-label');
+            const venuesHeading = document.getElementById('venues-heading');
+            const cityBar = document.getElementById('city-bar');
+
+            const updateCityUI = () => {
+                if (currentCity === 'All') {
+                    locationLabel.textContent = '📍 All Kerala Cities';
+                    venuesHeading.textContent = 'All Kerala Venues';
+                } else {
+                    locationLabel.textContent = `📍 ${currentCity}, Kerala`;
+                    venuesHeading.textContent = `Turfs in ${currentCity}`;
+                }
+                document.querySelectorAll('.city-chip').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.city.toLowerCase() === currentCity.toLowerCase());
+                });
+            };
+
+            const renderVenues = () => {
+                updateCityUI();
+                venuesList.innerHTML = '';
+                const filtered = allVenues.filter(v => {
+                    const matchCity = currentCity === 'All' || (v.city && v.city.toLowerCase() === currentCity.toLowerCase());
+                    const matchSport = currentSport === 'All' || v.sport === currentSport;
+                    const matchSearch = !searchTerm ||
+                        v.name.toLowerCase().includes(searchTerm) ||
+                        v.sport.toLowerCase().includes(searchTerm) ||
+                        (v.address && v.address.toLowerCase().includes(searchTerm)) ||
+                        (v.city && v.city.toLowerCase().includes(searchTerm));
+                    return matchCity && matchSport && matchSearch;
+                });
+
+                if (!filtered.length) {
+                    venuesList.innerHTML = `<p style="color:var(--text-secondary);text-align:center;padding:24px;">No ${currentSport !== 'All' ? currentSport : ''} turfs found in ${currentCity}.</p>`;
+                    return;
+                }
+
+                filtered.forEach((v) => {
+                    const card = document.createElement('a');
+                    card.href = `venue-detail.html?id=${v.id}`;
+                    card.className = 'venue-card';
+                    card.style.opacity = '1';
+                    card.style.transform = 'none';
+                    card.innerHTML = `
+                        <div class="venue-header ${v.typeClass}">
+                            <div class="sport-badge">${v.sport}</div>
+                            ${v.emoji}
+                        </div>
+                        <div class="venue-info">
+                            <h3 class="venue-name">${v.name}</h3>
+                            <div class="venue-loc"><span>📍 ${v.address}</span> <span>${v.dist}</span></div>
+                            <div class="venue-meta">
+                                <div class="rating"><span class="rating-star">⭐</span> ${v.rating} <span style="color:var(--text-muted);font-weight:400">(${v.revs})</span></div>
+                                <div class="price">₹${v.price}/hr</div>
+                            </div>
+                            <div class="tags">
+                                <span class="tag">${v.indoor ? '🌿 Indoor' : '☀️ Outdoor'}</span>
+                            </div>
+                            <button class="book-btn">Book Now →</button>
+                        </div>
+                    `;
+                    venuesList.appendChild(card);
+                });
+            };
+
+            // Render immediately (0ms)
+            renderVenues();
+
+            // Toggle city selector bar when clicking the top location text
+            document.getElementById('location-toggle').addEventListener('click', () => {
+                cityBar.classList.toggle('open');
+            });
+
+            // City chip click handler
+            document.querySelectorAll('.city-chip').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentCity = btn.dataset.city;
+                    if (currentCity !== 'All') {
+                        localStorage.setItem('slotit_location', JSON.stringify({ type: 'city', name: currentCity }));
+                    }
+                    renderVenues();
+                });
+            });
+
+            // Fetch from backend API and merge with catalog so all 4 cities always have their distinct turfs
+            try {
+                let apiList = asList(await apiCall('/venues'), 'venues').map(mapVenue);
+                if (apiList.length) {
+                    const byId = new Map(catalogVenues.map(v => [v.id, v]));
+                    apiList.forEach(v => byId.set(v.id, { ...(byId.get(v.id) || {}), ...v }));
+                    allVenues = Array.from(byId.values());
+                    renderVenues();
+                }
+            } catch (err) {
+                notifyOffline();
+            }
+
+            document.querySelectorAll('.chip').forEach(chip => {
+                chip.addEventListener('click', (e) => {
+                    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    currentSport = e.currentTarget.dataset.sport;
+                    renderVenues();
+                });
+            });
+
+            document.querySelector('.search-input').addEventListener('input', (e) => {
+                searchTerm = e.target.value.trim().toLowerCase();
+                renderVenues();
+            });
+
+            document.getElementById('see-all-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                currentCity = currentCity === 'All' ? ((loc && loc.name) || 'Kollam') : 'All';
+                document.getElementById('see-all-link').textContent = currentCity === 'All' ? `Show ${loc && loc.name ? loc.name : 'Kollam'} →` : 'All Cities →';
+                renderVenues();
+            });
+        });
+    </script>
+</body>
+</html>

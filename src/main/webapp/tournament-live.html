@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Match - Slotit</title>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap' rel='stylesheet'>
+    <link rel='stylesheet' href='css/styles.css'>
+    <style>
+        .hero-scoreboard { background: linear-gradient(135deg, var(--accent), #f59e0b); color: white; padding: 40px 20px; text-align: center; border-radius: 0 0 var(--radius-lg) var(--radius-lg); position: relative; }
+        .score-display { font-size: 3rem; font-weight: 800; margin: 15px 0; }
+        .teams-display { font-size: 1.25rem; font-weight: 600; }
+        .live-tag { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+        .pulse-dot { width: 8px; height: 8px; background-color: #ef4444; border-radius: 50%; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        
+        .commentary-feed { padding: 20px; }
+        .feed-item { display: flex; gap: 15px; margin-bottom: 20px; position: relative; }
+        .feed-item::before { content: ''; position: absolute; left: 19px; top: 30px; bottom: -20px; width: 2px; background: var(--border); }
+        .feed-item:last-child::before { display: none; }
+        .feed-time { min-width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; z-index: 1; }
+        .feed-content { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: var(--radius-md); flex: 1; }
+        
+        .admin-panel { padding: 20px; background: var(--surface); border-top: 1px solid var(--border); position: sticky; bottom: 0; }
+        
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--surface); padding: 20px; border-radius: var(--radius-lg); width: 90%; max-width: 400px; }
+    </style>
+</head>
+<body>
+    <div class="top-bar" style="background: transparent; position: absolute; width: 100%; border: none; color: white;">
+        <a href="tournaments.html" class="back-btn" style="color: white; text-decoration: none; font-size: 1.5rem;">←</a>
+        <div class="top-bar-title" style="color: white;">🔴 Live Match</div>
+    </div>
+
+    <div class="hero-scoreboard">
+        <div class="live-tag"><div class="pulse-dot"></div> LIVE</div>
+        <div class="teams-display" style="margin-top: 30px;">Team Alpha <span style="opacity:0.7; font-size: 0.9rem; margin: 0 10px;">VS</span> Team Beta</div>
+        <div class="score-display">2 - 1</div>
+        <div class="text-sm" style="opacity: 0.9;">Monsoon Cup • Semi-Final</div>
+        <div class="text-xs mt-1" style="opacity: 0.8;">📍 GreenPark Arena</div>
+    </div>
+
+    <div class="commentary-feed" id="feedContainer">
+        <h3 class="fw-700 mb-4">Live Commentary</h3>
+        
+        <div class="feed-item">
+            <div class="feed-time">45'</div>
+            <div class="feed-content">
+                <div class="fw-600 mb-1">⚽ GOAL!</div>
+                <div class="text-sm">Ravi scores a stunner for Team Alpha to take the lead right before half-time!</div>
+            </div>
+        </div>
+        
+        <div class="feed-item">
+            <div class="feed-time">38'</div>
+            <div class="feed-content">
+                <div class="fw-600 mb-1">🟨 Yellow Card</div>
+                <div class="text-sm">Arun (Team Beta) gets booked for a rough tackle.</div>
+            </div>
+        </div>
+        
+        <div class="feed-item">
+            <div class="feed-time">22'</div>
+            <div class="feed-content">
+                <div class="fw-600 mb-1">⚽ GOAL!</div>
+                <div class="text-sm">Suresh equalizes for Team Beta from a corner kick.</div>
+            </div>
+        </div>
+        
+        <div class="feed-item">
+            <div class="feed-time">15'</div>
+            <div class="feed-content">
+                <div class="fw-600 mb-1">⚽ GOAL!</div>
+                <div class="text-sm">Ravi opens the scoring for Team Alpha!</div>
+            </div>
+        </div>
+        
+        <div class="feed-item">
+            <div class="feed-time">1'</div>
+            <div class="feed-content">
+                <div class="fw-600 mb-1">🏁 Match Started</div>
+                <div class="text-sm">Kickoff at GreenPark Arena.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-panel">
+        <button class="btn btn-accent btn-block" onclick="openModal()">Update Score (Admin)</button>
+    </div>
+
+    <div class="modal" id="updateModal">
+        <div class="modal-content">
+            <h3 class="fw-700 mb-3">Update Live Feed</h3>
+            <div class="flex gap-2 mb-3">
+                <div style="flex:1;">
+                    <label class="text-xs text-secondary">Team Alpha</label>
+                    <input type="number" class="input-field" value="2" id="score1">
+                </div>
+                <div style="flex:1;">
+                    <label class="text-xs text-secondary">Team Beta</label>
+                    <input type="number" class="input-field" value="1" id="score2">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="text-xs text-secondary">Minute</label>
+                <input type="text" class="input-field" placeholder="e.g. 50'" id="eventMin">
+            </div>
+            <div class="mb-4">
+                <label class="text-xs text-secondary">Commentary</label>
+                <input type="text" class="input-field" placeholder="What happened?" id="eventDesc">
+            </div>
+            <div class="flex gap-2">
+                <button class="btn btn-outline" style="flex:1;" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="saveUpdate()">Save Update</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        function openModal() { document.getElementById('updateModal').classList.add('active'); }
+        function closeModal() { document.getElementById('updateModal').classList.remove('active'); }
+        
+        function saveUpdate() {
+            const min = document.getElementById('eventMin').value || "Now";
+            const desc = document.getElementById('eventDesc').value;
+            const s1 = document.getElementById('score1').value;
+            const s2 = document.getElementById('score2').value;
+            
+            if (desc) {
+                const feed = document.getElementById('feedContainer');
+                const title = document.querySelector('h3.fw-700.mb-4');
+                const newItem = document.createElement('div');
+                newItem.className = 'feed-item animate-in';
+                newItem.innerHTML = `
+                    <div class="feed-time">${min}</div>
+                    <div class="feed-content">
+                        <div class="fw-600 mb-1">📢 Update</div>
+                        <div class="text-sm">${desc}</div>
+                    </div>
+                `;
+                title.insertAdjacentElement('afterend', newItem);
+                
+                document.querySelector('.score-display').textContent = `${s1} - ${s2}`;
+            }
+            closeModal();
+            document.getElementById('eventMin').value = '';
+            document.getElementById('eventDesc').value = '';
+        }
+    </script>
+</body>
+</html>

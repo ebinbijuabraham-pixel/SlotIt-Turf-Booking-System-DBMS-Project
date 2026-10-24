@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563EB">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Slotit">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>Slotit</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .splash-content {
+            text-align: center;
+            color: white;
+        }
+        .logo {
+            font-size: 60px;
+            margin-bottom: 16px;
+            display: inline-block;
+        }
+        .brand-name {
+            font-size: 40px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+        }
+        .tagline {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 48px;
+        }
+        .loading-dots {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        .skip-link {
+            position: absolute;
+            bottom: 32px;
+            color: white;
+            opacity: 0.7;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .skip-link:hover { opacity: 1; }
+    </style>
+</head>
+<body class="gradient-primary">
+    <div class="splash-content animate-in">
+        <div class="logo pulse">⚽</div>
+        <div class="brand-name">Slotit</div>
+        <div class="tagline">Book. Play. Win.</div>
+        <div class="loading-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+    
+    <a href="login.html" class="skip-link">Skip</a>
+
+    <script src="js/app.js"></script>
+    <script>
+        setTimeout(() => {
+            if (isLoggedIn()) {
+                window.location.href = 'home.html';
+            } else {
+                window.location.href = 'login.html';
+            }
+        }, 900);
+    </script>
+</body>
+</html>

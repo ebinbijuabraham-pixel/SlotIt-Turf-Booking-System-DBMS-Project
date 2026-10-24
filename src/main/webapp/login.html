@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563EB">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Slotit">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <title>Slotit</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .login-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 24px;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .login-logo {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+        .login-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .auth-card {
+            width: 100%;
+            max-width: 400px;
+        }
+        .auth-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .auth-subtitle {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--text-muted);
+            margin: 24px 0;
+            font-size: 13px;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border);
+        }
+        .divider::before { margin-right: 12px; }
+        .divider::after { margin-left: 12px; }
+        .password-input {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-header animate-in">
+            <div class="login-logo">⚽</div>
+            <div class="login-title">Slotit</div>
+            <p class="text-secondary mt-8">Book. Play. Win.</p>
+        </div>
+
+        <div class="card auth-card animate-in" style="animation-delay: 0.1s;">
+            <h1 class="auth-title">Welcome Back</h1>
+            <p class="auth-subtitle">Sign in to continue</p>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" class="input-field" placeholder="Enter your email" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <div class="password-input">
+                        <input type="password" id="password" class="input-field" placeholder="Enter your password" required>
+                        <button type="button" class="toggle-password" onclick="togglePassword()">Show</button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block btn-lg mt-24">Sign In</button>
+            </form>
+
+            <div class="divider">or</div>
+
+            <div class="text-center">
+                <a href="register.html" style="color: var(--primary); font-weight: 600; text-decoration: none;">Don't have an account? Register</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        function togglePassword() {
+            const pwd = document.getElementById('password');
+            const btn = document.querySelector('.toggle-password');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                btn.textContent = 'Hide';
+            } else {
+                pwd.type = 'password';
+                btn.textContent = 'Show';
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // Redirect owners to their dashboard, players to location picker
+            const goNext = (user) => {
+                window.location.href = (user.role === 'owner' || user.role === 'admin')
+                    ? 'owner-dashboard.html' : 'location.html';
+            };
+
+            try {
+                const response = await apiCall('/auth/login', 'POST', { email, password });
+                const user = normalizeUser(response.user || response);
+                setCurrentUser(user);
+                if (response.token) localStorage.setItem('slotit_token', response.token);
+                showToast(`Welcome back, ${user.name}!`, 'success');
+                setTimeout(() => goNext(user), 600);
+            } catch (err) {
+                if (!err.isNetwork) {
+                    // Wrong credentials / validation error from the server
+                    showToast(err.message || 'Invalid credentials', 'error');
+                    return;
+                }
+                // Server unreachable -> offline demo login
+                const isOwner = email.toLowerCase().includes('owner');
+                const mockUser = {id: isOwner ? 2 : 1, name: isOwner ? 'Venue Owner' : 'Ebin', email,
+                    role: isOwner ? 'owner' : 'player', walletBalance: 2500, badge: 'gold', streakCount: 5};
+                setCurrentUser(mockUser);
+                localStorage.setItem('slotit_token', 'mock_token_123');
+                showToast('Offline demo data – logged in (Mock)', 'info');
+                setTimeout(() => goNext(normalizeUser(mockUser)), 1000);
+            }
+        });
+    </script>
+</body>
+</html>

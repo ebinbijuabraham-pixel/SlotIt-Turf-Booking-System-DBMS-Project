@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squad Finder - Slotit</title>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap' rel='stylesheet'>
+    <link rel='stylesheet' href='css/styles.css'>
+    <style>
+        .callout-card { background: var(--primary-light); padding: 20px; border-radius: var(--radius-md); text-align: center; margin-bottom: 20px; border: 1px dashed var(--primary); }
+        .squad-card { background: var(--surface); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 15px; }
+        .squad-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .progress-bar-bg { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 10px; margin-bottom: 8px; }
+        .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+        .fill-green { background: var(--success); }
+        .fill-orange { background: var(--warning); }
+        .fill-red { background: var(--error); }
+        .avatars { display: flex; margin-top: 10px; margin-bottom: 15px; }
+        .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; margin-left: -5px; border: 2px solid var(--surface); }
+        .avatar:first-child { margin-left: 0; }
+
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--surface); padding: 20px; border-radius: var(--radius-lg); width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="top-bar-title">👥 Squad Finder</div>
+        <a href="tournaments.html" class="btn btn-outline btn-sm" style="text-decoration:none;">🏆 Tournaments</a>
+    </div>
+
+    <div class="page-content" style="padding-bottom: 88px;">
+        <div class="callout-card">
+            <h3 class="fw-700 mb-8">Need players for your game?</h3>
+            <p class="text-sm text-secondary mb-16">Create a request and let nearby players join your squad!</p>
+            <button class="btn btn-primary" onclick="openModal()">+ Create a Squad Post</button>
+        </div>
+
+        <h3 class="fw-600 mb-16 text-sm">Open Squad Requests</h3>
+        <div id="squads-container"></div>
+    </div>
+
+    <div class="modal" id="createModal">
+        <div class="modal-content">
+            <h3 class="fw-700 mb-16">Create Squad Request</h3>
+            <div class="input-group">
+                <label>Sport</label>
+                <select class="input-field" id="sq-sport">
+                    <option value="Football">⚽ Football</option>
+                    <option value="Cricket">🏏 Cricket</option>
+                    <option value="Badminton">🏸 Badminton</option>
+                    <option value="Basketball">🏀 Basketball</option>
+                    <option value="Tennis">🎾 Tennis</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Total Players Needed</label>
+                <input type="number" class="input-field" id="sq-needed" value="7" min="2" max="22">
+            </div>
+            <div class="input-group">
+                <label>Message / Skill Level</label>
+                <textarea class="input-field" id="sq-message" rows="2" placeholder="e.g. Need 2 defenders for 7s Football at GreenPark"></textarea>
+            </div>
+            <div class="flex gap-8">
+                <button class="btn btn-outline" style="flex:1;" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="submitPost()">Post Request</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="home.html" class="nav-item">
+            <div class="nav-icon">🏠</div>
+            <span>Home</span>
+        </a>
+        <a href="venue-detail.html" class="nav-item">
+            <div class="nav-icon">🔍</div>
+            <span>Explore</span>
+        </a>
+        <a href="my-bookings.html" class="nav-item">
+            <div class="nav-icon">📋</div>
+            <span>Bookings</span>
+        </a>
+        <a href="squad-finder.html" class="nav-item active">
+            <div class="nav-icon">👥</div>
+            <span>Squad</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <div class="nav-icon">👤</div>
+            <span>Profile</span>
+        </a>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        function openModal() { document.getElementById('createModal').classList.add('active'); }
+        function closeModal() { document.getElementById('createModal').classList.remove('active'); }
+
+        let loadSquads = async () => {};
+
+        async function submitPost() {
+            const user = getCurrentUser() || { id: 1, userId: 1, name: 'Player' };
+            const sport = document.getElementById('sq-sport').value;
+            const playersNeeded = parseInt(document.getElementById('sq-needed').value, 10) || 7;
+            const message = document.getElementById('sq-message').value.trim() || `Need players for ${sport}!`;
+
+            try {
+                await apiCall('/squads/create', 'POST', {
+                    user_id: user.userId || user.id || 1,
+                    sport,
+                    players_needed: playersNeeded,
+                    message
+                });
+                closeModal();
+                document.getElementById('sq-message').value = '';
+                showToast('Squad request posted to MySQL!', 'success');
+                await loadSquads();
+            } catch (err) {
+                closeModal();
+                showToast('Squad request posted (Offline demo)!', 'info');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = getCurrentUser() || { id: 1, userId: 1 };
+            const userId = user.userId || user.id || 1;
+            const container = document.getElementById('squads-container');
+
+            const FALLBACK_SQUADS = [
+                { requestId: 1, sport: 'Football', venueName: 'GreenPark Football Arena', courtName: 'Turf A', slotDate: 'Today', startTime: '19:00:00', playersNeeded: 7, currentCount: 5, message: 'Need 2 more players for 7-a-side tonight! Intermediate level.', status: 'open', creatorName: 'Ebin Biju' },
+                { requestId: 2, sport: 'Badminton', venueName: 'SmashPoint Badminton Hub', courtName: 'Court 1', slotDate: 'Today', startTime: '08:00:00', playersNeeded: 4, currentCount: 3, message: 'Need 1 partner for doubles match.', status: 'open', creatorName: 'Tharun B' },
+                { requestId: 3, sport: 'Cricket', venueName: 'CricketZone Nets', courtName: 'Box Turf', slotDate: 'Tomorrow', startTime: '18:00:00', playersNeeded: 11, currentCount: 8, message: 'Looking for 3 all-rounders for box cricket clash.', status: 'open', creatorName: 'Afroz S' }
+            ];
+
+            loadSquads = async () => {
+                let squads = FALLBACK_SQUADS;
+                try {
+                    const data = asList(await apiCall('/squads'));
+                    if (data.length) squads = data;
+                } catch (e) {
+                    notifyOffline();
+                }
+
+                container.innerHTML = '';
+                squads.forEach(s => {
+                    const cur = Number(s.currentCount || 1);
+                    const max = Number(s.playersNeeded || 5);
+                    const pct = Math.min(100, Math.round((cur / max) * 100));
+                    const isFull = cur >= max || (s.status || '').toLowerCase() === 'full';
+                    const fillClass = isFull ? 'fill-red' : (pct >= 80 ? 'fill-orange' : 'fill-green');
+                    const sport = s.sport || 'Football';
+                    const emoji = sport.toLowerCase().includes('cricket') ? '🏏' : (sport.toLowerCase().includes('badminton') ? '🏸' : '⚽');
+
+                    const card = document.createElement('div');
+                    card.className = 'squad-card';
+                    if (isFull) card.style.opacity = '0.75';
+                    card.innerHTML = `
+                        <div class="squad-header">
+                            <div>
+                                <span class="badge badge-primary text-xs mb-8">${emoji} ${sport}</span>
+                                <div class="fw-700">${s.venueName || 'GreenPark Arena'}</div>
+                                <div class="text-xs text-muted">Hosted by ${s.creatorName || 'Player'}</div>
+                            </div>
+                            <div class="text-xs text-secondary" style="text-align:right;">
+                                <div>📅 ${s.slotDate || 'Today'}</div>
+                                <div>⏰ ${formatTime(s.startTime || '18:00:00')}</div>
+                            </div>
+                        </div>
+                        <div class="text-sm mb-8">"${s.message || 'Looking for players!'}"</div>
+                        <div class="text-xs fw-700">Players Joined: ${cur}/${max}</div>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill ${fillClass}" style="width: ${pct}%;"></div></div>
+                        <button class="btn ${isFull ? 'btn-outline' : 'btn-primary'} btn-sm btn-block mt-8 join-btn" ${isFull ? 'disabled' : ''}>
+                            ${isFull ? 'Squad Full' : 'Join Squad (SELECT FOR UPDATE)'}
+                        </button>
+                    `;
+
+                    if (!isFull) {
+                        card.querySelector('.join-btn').addEventListener('click', async () => {
+                            try {
+                                const res = await apiCall('/squads/join', 'POST', {
+                                    request_id: s.requestId || s.id,
+                                    user_id: userId
+                                });
+                                showToast(res.message || 'Joined squad!', 'success');
+                                await loadSquads();
+                            } catch (err) {
+                                if (err.isNetwork) {
+                                    s.currentCount = cur + 1;
+                                    showToast('Joined squad (Offline demo)!', 'info');
+                                    return;
+                                }
+                                showToast(err.message || 'Could not join squad', 'error');
+                            }
+                        });
+                    }
+
+                    container.appendChild(card);
+                });
+            };
+
+            await loadSquads();
+        });
+    </script>
+</body>
+</html>
