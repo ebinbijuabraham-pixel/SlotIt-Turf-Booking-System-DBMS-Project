@@ -2,7 +2,6 @@
 
 A DBMS mini-project (24ERJ502, T.K.M. College of Engineering, Kollam) that lets players book hourly slots at football, cricket, badminton, basketball and tennis venues, find squads, and join tournaments. Venue owners get a revenue dashboard.
 
-**Team (Group 9):** Ebin Biju Abraham, Afroz Shanavas Palott, Niveditha C M, Tharun Bhaskaran
 
 ## Features
 - Player / Owner registration and login
